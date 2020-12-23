@@ -1,0 +1,18 @@
+/* Module Custom Styles */
+.kay {
+    height: 300px;
+    border: 4px solid yellow;
+    overflow: hidden;
+}
+/*
+th, td {
+    text-align: left;
+    padding: 8px;
+}
+th {
+    background-color: #949aab;
+}
+
+tr:nth-child(even) {
+    background-color: Lightgreen;
+}*/

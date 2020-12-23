@@ -1,0 +1,77 @@
+@using qlogics.Kingdom_Ideas.Services
+@using qlogics.Kingdom_Ideas.Models
+
+@namespace qlogics.Kingdom_Ideas
+@inherits ModuleBase
+@inject IKingdom_IdeasService Kingdom_IdeasService
+@inject NavigationManager NavigationManager
+
+@if (_Kingdom_Ideass == null)
+{
+<button class="btn btn-primary" disabled>
+    <span class="spinner-border spinner-border-sm"></span>
+    Loading..
+</button>
+}
+else
+{
+    <br/>
+    <br/>
+    <ActionLink Action="DisplayPosts" class="btn btn-success" Text="View My Posts" />
+    <br />
+    <br />
+    
+    @if (@_Kingdom_Ideass.Count != 0)
+    {
+        <Pager Items="@_Kingdom_Ideass" class="table table-white table-hover">
+            <Header>
+                
+                <th style="width: 1px;">&nbsp;</th>
+                <th>Title</th>
+                <th>Date Created</th>
+                <th>last Update</th>
+            </Header>
+            <Row>
+                
+                <td><ActionLink Action="Details" Parameters="@($"id=" + context.Kingdom_IdeasId.ToString())" /></td>
+                <td>@context.Title</td>
+                <td>@context.CreatedOn</td>
+                <td>@context.ModifiedOn</td>
+                
+              
+            </Row>
+
+        </Pager>
+    }
+    else
+    {
+        <p>You haven't shared any ideas yet</p>
+    }
+}
+
+
+
+@code {
+    public override List<Resource> Resources => new List<Resource>()
+    {
+        new Resource { ResourceType = ResourceType.Stylesheet, Url = ModulePath() + "Module.css" },
+        new Resource { ResourceType = ResourceType.Script, Url = ModulePath() + "Module.js" }
+    };
+
+    List<Kingdom_Ideas> _Kingdom_Ideass;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _Kingdom_Ideass = await Kingdom_IdeasService.GetKingdom_IdeassAsync(ModuleState.ModuleId);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Kingdom_Ideas {Error}", ex.Message);
+            AddModuleMessage("Error Loading Kingdom_Ideas", MessageType.Error);
+        }
+    }
+
+    
+}

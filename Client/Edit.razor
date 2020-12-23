@@ -1,0 +1,112 @@
+@using Oqtane.Modules.Controls
+@using qlogics.Kingdom_Ideas.Services
+@using qlogics.Kingdom_Ideas.Models
+
+@namespace qlogics.Kingdom_Ideas
+@inherits ModuleBase
+@inject IKingdom_IdeasService Kingdom_IdeasService
+@inject NavigationManager NavigationManager
+
+<table class="table table-borderless">
+    <tr>
+        <td>
+            <Label For="title" HelpText="Enter title">Title: </Label>
+        </td>
+        <td>
+            <input id="title" class="form-control" @bind="@_title" />
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <Label For="description" HelpText="Enter a name">Description: </Label>
+        </td>
+        <td style="height: 300px; border: 2px solid blue;">
+            <textarea rows="10"  id="description"  class="form-control kay" @bind="@_description" />
+        </td>
+    </tr>
+</table>
+<button type="button" class="btn btn-success" @onclick="Save">Save</button>
+<NavLink class="btn btn-secondary" href="@NavigateUrl()">Cancel</NavLink>
+<br />
+<br />
+@if (PageState.Action == "Edit")
+{
+    <AuditInfo CreatedBy="@_createdby" CreatedOn="@_createdon" ModifiedBy="@_modifiedby" ModifiedOn="@_modifiedon"></AuditInfo>
+}
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+
+    public override string Actions => "Add,Edit";
+
+    public override string Title => "Manage Kingdom_Ideas";
+
+    public override List<Resource> Resources => new List<Resource>()
+    {
+        new Resource { ResourceType = ResourceType.Stylesheet, Url = ModulePath() + "Module.css" }
+    };
+
+    int _id;
+    string _title;
+    string _description;
+    string _createdby;
+    DateTime _createdon;
+    string _modifiedby;
+    DateTime _modifiedon;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (PageState.Action == "Edit")
+            {
+                _id = Int32.Parse(PageState.QueryString["id"]);
+                Kingdom_Ideas Kingdom_Ideas = await Kingdom_IdeasService.GetKingdom_IdeasAsync(_id, ModuleState.ModuleId);
+                if (Kingdom_Ideas != null)
+                {
+                    _title = Kingdom_Ideas.Title;
+                    _description = Kingdom_Ideas.Description;
+                    _createdby = Kingdom_Ideas.CreatedBy;
+                    _createdon = Kingdom_Ideas.CreatedOn;
+                    _modifiedby = Kingdom_Ideas.ModifiedBy;
+                    _modifiedon = Kingdom_Ideas.ModifiedOn;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Kingdom_Ideas {Kingdom_IdeasId} {Error}", _id, ex.Message);
+            AddModuleMessage("Error Loading Kingdom_Ideas", MessageType.Error);
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            if (PageState.Action == "Add")
+            {
+                Kingdom_Ideas Kingdom_Ideas = new Kingdom_Ideas();
+                Kingdom_Ideas.ModuleId = ModuleState.ModuleId;
+                Kingdom_Ideas.Title = _title;
+                Kingdom_Ideas.Description = _description;
+                Kingdom_Ideas = await Kingdom_IdeasService.AddKingdom_IdeasAsync(Kingdom_Ideas);
+                await logger.LogInformation("Kingdom_Ideas Added {Kingdom_Ideas}", Kingdom_Ideas);
+            }
+            else
+            {
+                Kingdom_Ideas Kingdom_Ideas = await Kingdom_IdeasService.GetKingdom_IdeasAsync(_id, ModuleState.ModuleId);
+                Kingdom_Ideas.Title = _title;
+                Kingdom_Ideas.Description = _description;
+                await Kingdom_IdeasService.UpdateKingdom_IdeasAsync(Kingdom_Ideas);
+                await logger.LogInformation("Kingdom_Ideas Updated {Kingdom_Ideas}", Kingdom_Ideas);
+            }
+            NavigationManager.NavigateTo(NavigateUrl());
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving Kingdom_Ideas {Error}", ex.Message);
+            AddModuleMessage("Error Saving Kingdom_Ideas", MessageType.Error);
+        }
+    }
+}

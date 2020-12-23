@@ -1,0 +1,92 @@
+﻿@using qlogics.Kingdom_Ideas.Services
+@using qlogics.Kingdom_Ideas.Models
+
+@namespace qlogics.Kingdom_Ideas
+@inherits ModuleBase
+@inject IKingdom_IdeasService Kingdom_IdeasService
+@inject NavigationManager NavigationManager
+
+@if (_Kingdom_Ideass == null)
+{
+<button class="btn btn-primary" disabled>
+    <span class="spinner-border spinner-border-sm"></span>
+    Loading..
+</button>
+}
+else
+{
+    
+    <ActionLink Action="Add" Security="SecurityAccessLevel.Edit" Text="Share Your Ideas" />
+    <br />
+    <br />
+    
+    @if (@_Kingdom_Ideass.Count != 0)
+    {
+        <Pager Items="@_Kingdom_Ideass" class="table table-white table-hover">
+            <Header>
+                <th style="width: 1px;">&nbsp;</th>
+                <th style="width: 1px;">&nbsp;</th>
+                <th>Title</th>
+                <th>Date Created</th>
+                <th>last Update</th>
+            </Header>
+            <Row>
+                
+                <td><ActionLink Action="Edit" Parameters="@($"id=" + context.Kingdom_IdeasId.ToString())" /></td>
+                <td><ActionDialog Header="Delete Kingdom_Ideas" Message="@("Are You Sure You Want To Delete The " + context.Title + " Kingdom_Ideas?")" Action="Delete" Security="SecurityAccessLevel.Edit" Class="btn btn-danger" OnClick="@(async () => await Delete(context))" /></td>
+                <td>@context.Title</td>
+                <td>@context.CreatedOn</td>
+                <td>@context.ModifiedOn</td>
+            </Row>
+
+        </Pager>
+        <NavLink class="btn btn-secondary" href="@NavigateUrl()">Cancel</NavLink>
+<br />
+<br />
+    }
+    else
+    {
+        <p>You haven't shared any ideas yet</p>
+    }
+}
+
+
+
+@code {
+    public override List<Resource> Resources => new List<Resource>()
+    {
+        new Resource { ResourceType = ResourceType.Stylesheet, Url = ModulePath() + "Module.css" },
+        new Resource { ResourceType = ResourceType.Script, Url = ModulePath() + "Module.js" }
+    };
+
+    List<Kingdom_Ideas> _Kingdom_Ideass;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _Kingdom_Ideass = await Kingdom_IdeasService.GetKingdom_IdeassAsync(ModuleState.ModuleId);
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Kingdom_Ideas {Error}", ex.Message);
+            AddModuleMessage("Error Loading Kingdom_Ideas", MessageType.Error);
+        }
+    }
+
+    private async Task Delete(Kingdom_Ideas Kingdom_Ideas)
+    {
+        try
+        {
+            await Kingdom_IdeasService.DeleteKingdom_IdeasAsync(Kingdom_Ideas.Kingdom_IdeasId, ModuleState.ModuleId);
+            await logger.LogInformation("Kingdom_Ideas Deleted {Kingdom_Ideas}", Kingdom_Ideas);
+            _Kingdom_Ideass = await Kingdom_IdeasService.GetKingdom_IdeassAsync(ModuleState.ModuleId);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Deleting Kingdom_Ideas {Kingdom_Ideas} {Error}", Kingdom_Ideas, ex.Message);
+            AddModuleMessage("Error Deleting Kingdom_Ideas", MessageType.Error);
+        }
+    }
+}

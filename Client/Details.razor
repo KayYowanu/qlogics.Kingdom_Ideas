@@ -1,0 +1,92 @@
+@using Oqtane.Modules.Controls
+@using qlogics.Kingdom_Ideas.Services
+@using qlogics.Kingdom_Ideas.Models
+
+@namespace qlogics.Kingdom_Ideas
+@inherits ModuleBase
+@inject IKingdom_IdeasService Kingdom_IdeasService
+@inject NavigationManager NavigationManager
+
+<table class="table table-borderless">
+    <tr>
+        <td>
+            <Label For="title"><h4><b>Title: </b></h4></Label>
+        </td>
+        <td>
+            @_title
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <Label For="description"><h4><b>Description: </b></h4></Label>
+        </td>
+        <td>
+            @_description
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <Label For="comment"><h4><b>Comment: </b></h4></Label>
+        </td>
+        <td>
+            <textarea id="comment" class="form-control" rows="7">Write your comment here</textarea><br/>
+            <NavLink class="btn btn-primary">Comment</NavLink><br/><br/><br/><br/><br/>
+        </td>
+    </tr>
+</table>
+<NavLink class="btn btn-secondary" href="@NavigateUrl()">Cancel</NavLink>
+<br />
+<br />
+@if (PageState.Action == "Details")
+{
+    <AuditInfo CreatedBy="@_createdby" CreatedOn="@_createdon" ModifiedBy="@_modifiedby" ModifiedOn="@_modifiedon"></AuditInfo>
+}
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+
+    public override string Actions => "Add,Details";
+
+    public override string Title => "Manage Kingdom_Ideas";
+
+    public override List<Resource> Resources => new List<Resource>()
+{
+        new Resource { ResourceType = ResourceType.Stylesheet, Url = ModulePath() + "Module.css" }
+    };
+
+    int _id;
+    string _title;
+    string _description;
+    string _createdby;
+    DateTime _createdon;
+    string _modifiedby;
+    DateTime _modifiedon;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (PageState.Action == "Details")
+            {
+                _id = Int32.Parse(PageState.QueryString["id"]);
+                Kingdom_Ideas Kingdom_Ideas = await Kingdom_IdeasService.GetKingdom_IdeasAsync(_id, ModuleState.ModuleId);
+                if (Kingdom_Ideas != null)
+                {
+                    _title = Kingdom_Ideas.Title;
+                    _description = Kingdom_Ideas.Description;
+                    _createdby = Kingdom_Ideas.CreatedBy;
+                    _createdon = Kingdom_Ideas.CreatedOn;
+                    _modifiedby = Kingdom_Ideas.ModifiedBy;
+                    _modifiedon = Kingdom_Ideas.ModifiedOn;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Kingdom_Ideas {Kingdom_IdeasId} {Error}", _id, ex.Message);
+            AddModuleMessage("Error Loading Kingdom_Ideas", MessageType.Error);
+        }
+    }
+
+
+}
